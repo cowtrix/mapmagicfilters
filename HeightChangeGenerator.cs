@@ -6,12 +6,12 @@ namespace MapMagic
     [Serializable]
     [GeneratorMenu(menu = "CustomObjects", name = "Height", disengageable = true)]
     public class HeightChangeGenerator : Generator
-    {
-        public float height;
+    {        
         public Input input = new Input("Input", InoutType.Objects, false, true);
         public Input intensity = new Input("Mask", InoutType.Map, false);
         public Output output = new Output("Output", InoutType.Objects);
-        public int seed = 12345;
+		
+		public float height;
         public float sizeFactor;
 
         public override IEnumerable<Input> Inputs()
@@ -44,8 +44,6 @@ namespace MapMagic
             //preparing output
             spatialHash = spatialHash.Copy();
 
-            var rnd = new InstanceRandom(MapMagic.instance.seed + seed + chunk.coord.x*1000 + chunk.coord.z, 1000);
-
             foreach (var obj in spatialHash.AllObjs())
             {
                 float percent = 1;
@@ -74,7 +72,6 @@ namespace MapMagic
             //params
             layout.fieldSize = 0.7f;
             //			layout.inputSize = 0.5f;
-            layout.Field(ref seed, "Seed");
             layout.Field(ref height, "Height");
             layout.Field(ref sizeFactor, "Size Factor");
         }

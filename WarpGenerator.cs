@@ -8,15 +8,15 @@ namespace MapMagic
     [GeneratorMenu(menu = "CustomMap", name = "Warp", disengageable = true)]
     public class WarpGenerator : Generator
     {
-        public float borderSize = 0.05f;
         public Input input = new Input("Input", InoutType.Map);
-        public float intensity = 1f;
         public Input maskIn = new Input("Mask", InoutType.Map);
-        public Output output = new Output("Output", InoutType.Map);
-        public float scale = 1f;
-        public int seed = 12345;
         public Input warpX = new Input("WarpX", InoutType.Map);
         public Input warpY = new Input("WarpY", InoutType.Map);
+
+        public Output output = new Output("Output", InoutType.Map);
+
+        public float borderSize = 0.05f;
+        public float intensity = 1f;
 
         public override IEnumerable<Input> Inputs()
         {
@@ -143,9 +143,7 @@ namespace MapMagic
             //params
             layout.fieldSize = 0.5f;
             layout.Field(ref intensity, "Intensity");
-            layout.Field(ref borderSize, "borderSize");
-            layout.Field(ref scale, "Scale");
-            layout.Field(ref seed, "Seed");
+            layout.Field(ref borderSize, "Border Size");
         }
     }
 }

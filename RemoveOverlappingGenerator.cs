@@ -27,7 +27,6 @@ namespace MapMagic
 
         public override void Generate(MapMagic.Chunk chunk)
         {
-            var matrix = (Matrix) mask.GetObject(chunk);
             var src = (SpatialHash) input.GetObject(chunk);
             if (!enabled)
             {

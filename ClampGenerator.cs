@@ -12,6 +12,9 @@ namespace MapMagic
         public Input maskIn = new Input("Mask", InoutType.Map);
         public Output output = new Output("Output", InoutType.Map);
 
+        public float Min = 0;
+        public float Max = 1;
+
         public override IEnumerable<Input> Inputs()
         {
             yield return input;
@@ -42,7 +45,7 @@ namespace MapMagic
             for (var i = 0; i < dst.array.Length; i++)
             {
                 var val = dst.array[i];
-                dst.array[i] = Mathf.Clamp01(val);
+                dst.array[i] = Mathf.Clamp(val, Min, Max);
             }
             //mask and safe borders
             if (chunk.stop) return;

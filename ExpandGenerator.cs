@@ -8,9 +8,9 @@ namespace MapMagic
     public class ExpandGenerator : Generator
     {
         public Input input = new Input("Input", InoutType.Map, false); //, mandatory:true);
-        public bool invert;
         public Input maskIn = new Input("Mask", InoutType.Map);
         public Output output = new Output("Output", InoutType.Map);
+		
         public int size = 5;
 
         public override IEnumerable<Input> Inputs()
@@ -50,14 +50,7 @@ namespace MapMagic
                         {
                             try
                             {
-                                if (!invert)
-                                {
-                                    dst[x + u, z + v] += src[x, z];
-                                }
-                                else
-                                {
-                                    dst[x + u, z + v] -= src[x, z];
-                                }
+								dst[x + u, z + v] += src[x, z];
                             }
                             catch (IndexOutOfRangeException)
                             {
@@ -87,7 +80,6 @@ namespace MapMagic
             maskIn.DrawIcon(layout);
 
             layout.Field(ref size, "Size");
-            layout.Field(ref invert, "Invert");
         }
     }
 }
