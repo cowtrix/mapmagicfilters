@@ -25,7 +25,7 @@ namespace MapMagic
             yield return output;
         }
 
-        public override void Generate(MapMagic.Chunk chunk)
+        public override void Generate(Chunk chunk, Biome generatingBiome = null)
         {
             //getting inputs
             var sourceHash = (SpatialHash) input.GetObject(chunk);

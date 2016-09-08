@@ -1,5 +1,4 @@
 using System.Collections.Generic;
-using UnityEditor;
 using UnityEngine;
 
 namespace MapMagic
@@ -13,12 +12,11 @@ namespace MapMagic
         public override IEnumerable<Input> Inputs() { yield return input; }
         public override IEnumerable<Output> Outputs() { yield return output; }
 
-        public int seed = 12345;
         public bool flipX = true;
         public bool flipY = true;
         public bool flipZ = true;
 
-        public override void Generate(MapMagic.Chunk chunk)
+        public override void Generate(Chunk chunk, Biome generatingBiome = null)
         {
             //getting inputs
             SpatialHash sourceHash = (SpatialHash)input.GetObject(chunk); if (sourceHash == null) return;

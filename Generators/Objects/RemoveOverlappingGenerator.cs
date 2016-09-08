@@ -11,7 +11,7 @@ namespace MapMagic
         public Input input = new Input("Input", InoutType.Objects);
         public Input mask = new Input("Mask", InoutType.Map, false);
         public Output output = new Output("Output", InoutType.Objects);
-        public int seed = 12345;
+
         public float Size = 1f;
 
         public override IEnumerable<Input> Inputs()
@@ -25,7 +25,7 @@ namespace MapMagic
             yield return output;
         }
 
-        public override void Generate(MapMagic.Chunk chunk)
+        public override void Generate(Chunk chunk, Biome generatingBiome = null)
         {
             var src = (SpatialHash) input.GetObject(chunk);
             if (!enabled)
@@ -38,10 +38,14 @@ namespace MapMagic
             var toRemove = new HashSet<SpatialObject>();
             if (src.AllObjs() != null)
             {
-                foreach (var first in src.AllObjs())
+                var firstEnum = src.AllObjs().GetEnumerator();
+                while (firstEnum.MoveNext())
                 {
-                    foreach (var second in src.AllObjs())
+                    var first = firstEnum.Current;
+                    var secondEnum = src.AllObjs().GetEnumerator();
+                    while (secondEnum.MoveNext())
                     {
+                        var second = secondEnum.Current;
                         if (first == second)
                         {
                             continue;
@@ -50,7 +54,12 @@ namespace MapMagic
                         {
                             continue;
                         }
-                        if (Vector2.Distance(first.pos, second.pos) < Size*first.sizeScalar*second.sizeScalar)
+
+                        var tHeight = MapMagic.instance.terrainHeight;
+                        var firstPos = new Vector3(first.pos.x, first.height * tHeight, first.pos.y);
+                        var secondPos = new Vector3(second.pos.x, second.height * tHeight, second.pos.y);
+
+                        if (Vector3.Distance(firstPos, secondPos) < Size * first.sizeScalar * second.sizeScalar)
                         {
                             toRemove.Add(second);
                         }
@@ -79,7 +88,6 @@ namespace MapMagic
             mask.DrawIcon(layout);
             layout.Par(5);
 
-            layout.Field(ref seed, "Seed");
             layout.Field(ref Size, "Size");
         }
     }

@@ -1,15 +1,19 @@
 using System;
 using System.Collections.Generic;
+using UnityEngine;
 
 namespace MapMagic
 {
     [Serializable]
-    [GeneratorMenu(menu = "CustomMap", name = "Normalize", disengageable = true)]
-    public class NormalizeGenerator : Generator
+    [GeneratorMenu(menu = "CustomMap", name = "Clamp", disengageable = true)]
+    public class ClampGenerator : Generator
     {
         public Input input = new Input("Input", InoutType.Map, false); //, mandatory:true);
         public Input maskIn = new Input("Mask", InoutType.Map);
         public Output output = new Output("Output", InoutType.Map);
+
+        public float Min = 0;
+        public float Max = 1;
 
         public override IEnumerable<Input> Inputs()
         {
@@ -22,7 +26,7 @@ namespace MapMagic
             yield return output;
         }
 
-        public override void Generate(MapMagic.Chunk chunk)
+        public override void Generate(Chunk chunk, Biome currentBiome = null)
         {
             //getting input
             var src = (Matrix) input.GetObject(chunk);
@@ -38,26 +42,10 @@ namespace MapMagic
             //preparing output
             var dst = src.Copy(null);
 
-            //curve
-            var min = float.MaxValue;
-            var max = float.MinValue;
             for (var i = 0; i < dst.array.Length; i++)
             {
                 var val = dst.array[i];
-                if (val < min)
-                {
-                    min = val;
-                }
-                if (val > max)
-                {
-                    max = val;
-                }
-            }
-
-            for (var i = 0; i < dst.array.Length; i++)
-            {
-                var val = dst.array[i];
-                dst.array[i] = (val - min)/(max - min);
+                dst.array[i] = Mathf.Clamp(val, Min, Max);
             }
             //mask and safe borders
             if (chunk.stop) return;
@@ -77,6 +65,9 @@ namespace MapMagic
             output.DrawIcon(layout);
             layout.Par(20);
             maskIn.DrawIcon(layout);
+
+            layout.Field(ref Min, "Min");
+            layout.Field(ref Max, "Max");
         }
     }
 }

@@ -17,6 +17,7 @@ namespace MapMagic
 
         public float borderSize = 0.05f;
         public float intensity = 1f;
+        public bool preserveGradient = true;
 
         public override IEnumerable<Input> Inputs()
         {
@@ -31,24 +32,32 @@ namespace MapMagic
             yield return output;
         }
 
-        public override void Generate(MapMagic.Chunk chunk)
+        public override void Generate(Chunk chunk, Biome currentBiome = null)
         {
             borderSize = Mathf.Clamp(borderSize, float.Epsilon, 1);
 
-            var matrix = (Matrix) input.GetObject(chunk);
-            if (matrix != null) matrix = matrix.Copy(null);
-            var warpXMatrix = (Matrix) warpX.GetObject(chunk);
-            var warpZMatrix = (Matrix) warpY.GetObject(chunk);
-
-            if (matrix == null) matrix = chunk.defaultMatrix;
-            if (chunk.stop) return;
-            if (!enabled || intensity == 0 || (warpXMatrix == null && warpZMatrix == null))
+            var refHeights = (Matrix)input.GetObject(chunk);
+            if (refHeights != null)
             {
-                output.SetObject(chunk, matrix);
+                refHeights = refHeights.Copy(null);
+            }
+            else
+            {
                 return;
             }
 
-            var refHeights = matrix.Copy();
+            var warpXMatrix = (Matrix) warpX.GetObject(chunk);
+            var warpZMatrix = (Matrix) warpY.GetObject(chunk);
+
+            if (chunk.stop) return;
+            if (!enabled || intensity == 0 || (warpXMatrix == null && warpZMatrix == null))
+            {
+                output.SetObject(chunk, refHeights);
+                return;
+            }
+
+            var matrix = chunk.defaultMatrix;
+
             var min = matrix.rect.Min;
             var max = matrix.rect.Max;
             var size = matrix.rect.size;
@@ -105,6 +114,27 @@ namespace MapMagic
                     warpXValue *= intensity*distanceXMultiplier*distanceZMultiplier;
                     warpZValue *= intensity*distanceXMultiplier*distanceZMultiplier;
 
+                    if (preserveGradient)
+                    {
+                        try
+                        {
+                            float left = refHeights[Mathfx.Clamp(x - 1, min.x, max.x - 1), Mathfx.Clamp(z, min.z, max.z - 1)];
+                            float up = refHeights[Mathfx.Clamp(x, min.x, max.x - 1), Mathfx.Clamp(z - 1, min.z, max.z - 1)];
+                            float right = refHeights[Mathfx.Clamp(x + 1, min.x, max.x - 1), Mathfx.Clamp(z, min.z, max.z - 1)];
+                            float down = refHeights[Mathfx.Clamp(x, min.x, max.x - 1), Mathfx.Clamp(z + 1, min.z, max.z - 1)];
+                            var gradient = FindNormalFromPoints(left, up, right, down, MapMagic.instance.terrainHeight, MapMagic.instance.terrainSize);
+
+                            // As it gets steeper, warp less
+                            var steepness = gradient.y;
+                            warpXValue *= steepness;
+                            warpZValue *= steepness;
+                        }
+                        catch (Exception)
+                        {
+                            throw;
+                        }
+                    }
+
                     var warpedX = Mathf.RoundToInt(x + warpXValue);
                     warpedX = Mathfx.Clamp(warpedX, min.x, max.x - 1);
 
@@ -144,6 +174,27 @@ namespace MapMagic
             layout.fieldSize = 0.5f;
             layout.Field(ref intensity, "Intensity");
             layout.Field(ref borderSize, "Border Size");
+            layout.Field(ref preserveGradient, "Preserver Gradient");
+        }
+
+        public static Vector3 FindNormalFromPoints(float left, float up, float right, float down, float yScale, float xzScale)
+        {
+            var offsets = new float[4];
+            offsets[0] = left;
+            offsets[1] = up;
+            offsets[2] = right;
+            offsets[3] = down;
+
+            xzScale = 1 / (yScale / xzScale);
+            for (var i = 0; i < offsets.Length; i++)
+            {
+                offsets[i] *= yScale;
+            }
+
+            var va = (new Vector3(0, Mathf.Abs(offsets[0] - offsets[2]), xzScale)).normalized;
+            var vb = (new Vector3(xzScale, Mathf.Abs(offsets[1] - offsets[3]), 0)).normalized;
+
+            return (Vector3.Cross(va, vb)).normalized;
         }
     }
 }

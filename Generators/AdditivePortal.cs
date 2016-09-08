@@ -7,7 +7,7 @@ using UnityEngine;
 namespace MapMagic
 {
     [System.Serializable]
-    [GeneratorMenu(menu = "CustomOutput", name = "Additive Portal", disengageable = true)]
+    [GeneratorMenu(menu = "", name = "Additive Portal", disengageable = true)]
     public class AdditivePortal : Generator
     {
         public Input[] inputArray = 
@@ -39,7 +39,7 @@ namespace MapMagic
         public string Key;
         public int InputCount = 1;
 
-        public override void Generate(MapMagic.Chunk chunk)
+        public override void Generate(Chunk chunk, Biome generatingBiome = null)
         {
             if (form == PortalForm.Out)
             {
@@ -62,7 +62,7 @@ namespace MapMagic
                         }
                     }
                 }
-                GenState = EGeneratorState.Normal;
+                //GenState = EGeneratorState.Normal;
 
                 // Do input
                 lock (inputList)
@@ -121,7 +121,7 @@ namespace MapMagic
             }
         }
 
-        public override void GenerateRecursive(MapMagic.Chunk tw)
+        public override void GenerateWithPriors(Chunk tw, Biome biome = null)
         {
             if (tw.stop || !enabled)
             {
@@ -132,11 +132,11 @@ namespace MapMagic
                 var otherAdditivePortals = MapMagic.instance.gens.GeneratorsOfType<AdditivePortal>();
                 foreach (var otherAdditivePortal in otherAdditivePortals)
                 {
-                    if (otherAdditivePortal.enabled && otherAdditivePortal.form == PortalForm.In && otherAdditivePortal.Key == Key)
+                    if (otherAdditivePortal != null && otherAdditivePortal.enabled && otherAdditivePortal.form == PortalForm.In && otherAdditivePortal.Key == Key)
                     {
                         try
                         {
-                            otherAdditivePortal.GenerateRecursive(tw);
+                            otherAdditivePortal.GenerateWithPriors(tw, biome);
                         }
                         catch (System.Exception e)
                         {
@@ -146,7 +146,7 @@ namespace MapMagic
                     }
                 }
             }
-            base.GenerateRecursive(tw);
+            base.GenerateWithPriors(tw);
         }
 
         public override bool IsDependentFrom(Generator prior)
@@ -164,7 +164,7 @@ namespace MapMagic
                     {
                         return true;
                     }
-                    return gen.IsDependentFrom(prior);
+                    return false;
                 }
             }
             return base.IsDependentFrom(prior);
@@ -193,7 +193,7 @@ namespace MapMagic
             layout.rightMargin = 15;
             if (form == PortalForm.Out)
             {
-                output.DrawIcon(layout, drawLabel: false);
+                output.DrawIcon(layout);
             }
 
             layout.Field(ref type);
@@ -217,9 +217,8 @@ namespace MapMagic
                 for (int i = 0; i < inputArray.Length; i++)
                 {
                     layout.Par(20);
-                    inputArray[i].DrawIcon(layout, drawLabel: false);
+                    inputArray[i].DrawIcon(layout);
                 }
-                layout.Label(string.Format("Outs: {0}", connectedCount));
             }
             else
             {

@@ -1,19 +1,18 @@
 using System;
 using System.Collections.Generic;
-using UnityEngine;
 
 namespace MapMagic
 {
     [Serializable]
-    [GeneratorMenu(menu = "CustomMap", name = "Clamp", disengageable = true)]
-    public class ClampGenerator : Generator
+    [GeneratorMenu(menu = "CustomMap", name = "Expand", disengageable = true)]
+    public class ExpandGenerator : Generator
     {
         public Input input = new Input("Input", InoutType.Map, false); //, mandatory:true);
         public Input maskIn = new Input("Mask", InoutType.Map);
         public Output output = new Output("Output", InoutType.Map);
-
-        public float Min = 0;
-        public float Max = 1;
+		
+        public int size = 5;
+        public int downSizing = 4;
 
         public override IEnumerable<Input> Inputs()
         {
@@ -26,8 +25,10 @@ namespace MapMagic
             yield return output;
         }
 
-        public override void Generate(MapMagic.Chunk chunk)
+        public override void Generate(Chunk chunk, Biome currentBiome = null)
         {
+            downSizing = Math.Max(1, downSizing);
+
             //getting input
             var src = (Matrix) input.GetObject(chunk);
 
@@ -40,13 +41,34 @@ namespace MapMagic
             }
 
             //preparing output
+            var factor = downSizing;
+            var sample = src.Downscale(factor);
             var dst = src.Copy(null);
 
-            for (var i = 0; i < dst.array.Length; i++)
+            for (var x = sample.rect.Min.x; x < sample.rect.Max.x; x++)
             {
-                var val = dst.array[i];
-                dst.array[i] = Mathf.Clamp(val, Min, Max);
+                for (var z = sample.rect.Min.z; z < sample.rect.Max.z; z++)
+                {
+                    if (sample[x, z] <= 0)
+                    {
+                        continue;
+                    }
+                    for (var u = -size; u < size; ++u)
+                    {
+                        for (var v = -size; v < size; ++v)
+                        {
+                            try
+                            {
+                                dst[x * factor + u, z * factor + v] += sample[x, z];
+                            }
+                            catch (IndexOutOfRangeException)
+                            {
+                            }
+                        }
+                    }
+                }
             }
+
             //mask and safe borders
             if (chunk.stop) return;
             var mask = (Matrix) maskIn.GetObject(chunk);
@@ -65,6 +87,9 @@ namespace MapMagic
             output.DrawIcon(layout);
             layout.Par(20);
             maskIn.DrawIcon(layout);
+
+            layout.Field(ref size, "Size");
+            layout.Field(ref downSizing, "Down Sizing");
         }
     }
 }

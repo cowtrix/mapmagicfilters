@@ -4,14 +4,12 @@ using System.Collections.Generic;
 namespace MapMagic
 {
     [Serializable]
-    [GeneratorMenu(menu = "CustomMap", name = "Expand", disengageable = true)]
-    public class ExpandGenerator : Generator
+    [GeneratorMenu(menu = "CustomMap", name = "Normalize", disengageable = true)]
+    public class NormalizeGenerator : Generator
     {
         public Input input = new Input("Input", InoutType.Map, false); //, mandatory:true);
         public Input maskIn = new Input("Mask", InoutType.Map);
         public Output output = new Output("Output", InoutType.Map);
-		
-        public int size = 5;
 
         public override IEnumerable<Input> Inputs()
         {
@@ -24,7 +22,7 @@ namespace MapMagic
             yield return output;
         }
 
-        public override void Generate(MapMagic.Chunk chunk)
+        public override void Generate(Chunk chunk, Biome currentBiome = null)
         {
             //getting input
             var src = (Matrix) input.GetObject(chunk);
@@ -40,24 +38,31 @@ namespace MapMagic
             //preparing output
             var dst = src.Copy(null);
 
-            for (var x = src.rect.Min.x; x < src.rect.Max.x; x++)
+            //curve
+            var min = float.MaxValue;
+            var max = float.MinValue;
+            for (var i = 0; i < dst.array.Length; i++)
             {
-                for (var z = src.rect.Min.z; z < src.rect.Max.z; z++)
+                var val = dst.array[i];
+                if (val < min)
                 {
-                    for (var u = -size; u < size; ++u)
-                    {
-                        for (var v = -size; v < size; ++v)
-                        {
-                            try
-                            {
-								dst[x + u, z + v] += src[x, z];
-                            }
-                            catch (IndexOutOfRangeException)
-                            {
-                            }
-                        }
-                    }
+                    min = val;
                 }
+                if (val > max)
+                {
+                    max = val;
+                }
+            }
+
+            for (var i = 0; i < dst.array.Length; i++)
+            {
+                var val = dst.array[i];
+                val = (val - min)/(max - min);
+                if (float.IsNaN(val))
+                {
+                    val = 0;
+                }
+                dst.array[i] = val;
             }
 
             //mask and safe borders
@@ -78,8 +83,6 @@ namespace MapMagic
             output.DrawIcon(layout);
             layout.Par(20);
             maskIn.DrawIcon(layout);
-
-            layout.Field(ref size, "Size");
         }
     }
 }
