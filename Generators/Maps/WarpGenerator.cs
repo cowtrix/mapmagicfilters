@@ -111,8 +111,10 @@ namespace MapMagic
                         }
                     }
 
-                    warpXValue *= intensity*distanceXMultiplier*distanceZMultiplier;
-                    warpZValue *= intensity*distanceXMultiplier*distanceZMultiplier;
+                    var scaledIntensity = (intensity/1024f)*MapMagic.instance.resolution;
+
+                    warpXValue *= scaledIntensity * distanceXMultiplier * distanceZMultiplier;
+                    warpZValue *= scaledIntensity * distanceXMultiplier * distanceZMultiplier;
 
                     if (preserveGradient)
                     {
@@ -135,15 +137,15 @@ namespace MapMagic
                         }
                     }
 
-                    var warpedX = Mathf.RoundToInt(x + warpXValue);
-                    warpedX = Mathfx.Clamp(warpedX, min.x, max.x - 1);
+                    float warpedX = x + warpXValue;
+                    //warpedX = Mathfx.Clamp(warpedX, min.x, max.x - 1);
 
-                    var warpedZ = Mathf.RoundToInt(z + warpZValue);
-                    warpedZ = Mathfx.Clamp(warpedZ, min.z, max.z - 1);
+                    float warpedZ = z + warpZValue;
+                    //warpedZ = Mathfx.Clamp(warpedZ, min.z, max.z - 1);
 
                     try
                     {
-                        matrix[x, z] = refHeights[warpedX, warpedZ];
+                        matrix[x, z] = refHeights.GetInterpolatedValue(new Vector2(warpedX, warpedZ));
                     }
                     catch (Exception)
                     {
@@ -160,14 +162,14 @@ namespace MapMagic
         {
             //inouts
             layout.Par(20);
-            input.DrawIcon(layout);
-            output.DrawIcon(layout);
+            input.DrawIcon(layout, "Input");
+            output.DrawIcon(layout, "Output");
             layout.Par(20);
-            warpX.DrawIcon(layout);
+            warpX.DrawIcon(layout, "WarpX");
             layout.Par(20);
-            warpY.DrawIcon(layout);
+            warpY.DrawIcon(layout, "WarpY");
             layout.Par(20);
-            maskIn.DrawIcon(layout);
+            maskIn.DrawIcon(layout, "Mask");
             layout.Par(6);
 
             //params
